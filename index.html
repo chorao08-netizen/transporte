@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TransportManager - Sistema de Gestão de Transportes</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 20px;
+        }
+
+        .sidebar-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #3b82f6;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            body {
+                background: white;
+            }
+            main {
+                margin-left: 0 !important;
+                padding: 0 !important;
+            }
+        }
+
+        .toast-enter {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        .toast-active {
+            transform: translateX(0);
+            opacity: 1;
+            transition: all 0.3s ease-out;
+        }
+        .toast-exit {
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s ease-in;
+        }
+
+        /* Classes Utilitárias */
+        .card-kpi {
+            @apply bg-white rounded-xl p-4 shadow-sm border-l-4 transition-transform hover:scale-[1.02];
+        }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="no-print fixed inset-y-0 left-0 w-64 bg-blue-950 text-white flex flex-col z-50">
+        <div class="p-6 flex items-center gap-3 border-b border-white/10">
+            <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <i class="fa-solid fa-truck text-xl"></i>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight">TransportManager</h1>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto py-4 space-y-1">
+            <a href="#" onclick="navigate('dashboard')" class="sidebar-link group flex items-center gap-3 px-6 py-3 text-slate-300 hover:text-white hover:bg-white/5 transition-all" id="nav-dashboard">
+                <i class="fa-solid fa-chart-line w-5"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" onclick="navigate('vehicles')" class="sidebar-link group flex items-center gap-3 px-6 py-3 text-slate-300 hover:text-white hover:bg-white/5 transition-all" id="nav-vehicles">
+                <i class="fa-solid fa-truck-front w-5"></i>
+                <span>Veículos</span>
+            </a>
+            <a href="#" onclick="navigate('drivers')" class="sidebar-link group flex items-center gap-3 px-6 py-3 text-slate-300 hover:text-white hover:bg-white/5 transition-all" id="nav-drivers">
+                <i class="fa-solid fa-id-card w-5"></i>
+                <span>Motoristas</span>
+            </a>
+            <a href="#" onclick="navigate('routes')" class="sidebar-link group flex items-center gap-3 px-6 py-3 text-slate-300 hover:text-white hover:bg-white/5 transition-all" id="nav-routes">
+                <i class="fa-solid fa-route w-5"></i>
+                <span>Rotas Diárias</span>
+            </a>
+            <a href="#" onclick="navigate('fuel')" class="sidebar-link group flex items-center gap-3 px-6 py-3 text-slate-300 hover:text-white hover:bg-white/5 transition-all" id="nav-fuel">
+                <i class="fa-solid fa-gas-pump w-5"></i>
+                <span>Combustível</span>
+            </a>
+            <a href="#" onclick="navigate('finance')" class="sidebar-link group flex items-center gap-3 px-6 py-3 text-slate-300 hover:text-white hover:bg-white/5 transition-all" id="nav-finance">
+                <i class="fa-solid fa-hand-holding-dollar w-5"></i>
+                <span>Financeiro</span>
+            </a>
+            <a href="#" onclick="navigate('payments')" class="sidebar-link group flex items-center gap-3 px-6 py-3 text-slate-300 hover:text-white hover:bg-white/5 transition-all" id="nav-payments">
+                <i class="fa-solid fa-wallet w-5"></i>
+                <span>Pgto. Motoristas</span>
+            </a>
+            <a href="#" onclick="navigate('invoices')" class="sidebar-link group flex items-center gap-3 px-6 py-3 text-slate-300 hover:text-white hover:bg-white/5 transition-all" id="nav-invoices">
+                <i class="fa-solid fa-file-invoice-dollar w-5"></i>
+                <span>Notas Fiscais</span>
+            </a>
+            <a href="#" onclick="navigate('maintenance')" class="sidebar-link group flex items-center gap-3 px-6 py-3 text-slate-300 hover:text-white hover:bg-white/5 transition-all" id="nav-maintenance">
+                <i class="fa-solid fa-wrench w-5"></i>
+                <span>Manutenções</span>
+            </a>
+            <a href="#" onclick="navigate('admin')" class="sidebar-link group flex items-center gap-3 px-6 py-3 text-slate-300 hover:text-white hover:bg-white/5 transition-all" id="nav-admin">
+                <i class="fa-solid fa-user-shield w-5"></i>
+                <span>Admin</span>
+            </a>
+            <a href="#" onclick="navigate('reports')" class="sidebar-link group flex items-center gap-3 px-6 py-3 text-slate-300 hover:text-white hover:bg-white/5 transition-all" id="nav-reports">
+                <i class="fa-solid fa-file-contract w-5"></i>
+                <span>Relatórios</span>
+            </a>
+        </nav>
+
+        <div class="p-4 text-xs text-slate-500 border-t border-white/10 text-center">
+            v1.0.0 &copy; 2026
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 ml-64 min-h-screen flex flex-col transition-all duration-300">
+        <!-- Header -->
+        <header class="no-print sticky top-0 bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 py-4 flex items-center justify-between z-40">
+            <h2 id="page-title" class="text-2xl font-bold text-slate-800">Dashboard</h2>
+            <div class="flex items-center gap-4">
+                <span id="current-date" class="text-slate-500 font-medium"></span>
+                <button id="backup-btn" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg font-medium transition-colors">
+                    <i class="fa-solid fa-download mr-1"></i> Backup BD
+                </button>
+                <button onclick="seedDatabase()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg font-medium transition-colors">
+                    <i class="fa-solid fa-database mr-1"></i> Reset/Seed
+                </button>
+            </div>
+        </header>
+
+        <!-- Page Containers -->
+        <div id="pages-container" class="p-8 flex-1">
+            <!-- Pages will be injected here by app.js -->
+        </div>
+    </main>
+
+    <!-- Global Modal Overlay -->
+    <div id="modal-overlay" class="no-print fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+        <div id="modal-content" class="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden transform transition-all">
+            <!-- Modal header and body will be dynamic -->
+        </div>
+    </div>
+
+    <!-- Image Modal Overlay (for Invoices) -->
+    <div id="image-modal" class="no-print fixed inset-0 bg-slate-900/90 z-[70] hidden flex items-center justify-center p-8" onclick="this.classList.add('hidden')">
+        <img id="full-image" src="" alt="Nota Fiscal" class="max-w-full max-h-full rounded-lg shadow-2xl object-contain">
+        <button class="absolute top-8 right-8 text-white text-4xl hover:text-slate-300">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="no-print fixed bottom-6 right-6 z-[100] flex flex-col gap-3"></div>
+
+    <!-- App Script -->
+    <script src="app.js?v=20260508b"></script>
+</body>
+</html>

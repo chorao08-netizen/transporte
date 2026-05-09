@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seed Database - TransportManager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes progress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        .progress-bar {
+            animation: progress 2.5s linear forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 min-h-screen flex items-center justify-center text-white">
+    <div class="max-w-md w-full p-8 text-center">
+        <div id="loading-view">
+            <div class="mb-8">
+                <div class="w-20 h-20 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto shadow-2xl shadow-blue-500/50">
+                    <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-black mt-6 uppercase tracking-widest">TransportManager</h1>
+                <p class="text-slate-400 font-bold text-xs uppercase mt-1">Sincronizando Banco de Dados</p>
+            </div>
+
+            <div class="space-y-4">
+                <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
+                    <div class="progress-bar h-full bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]"></div>
+                </div>
+                <p id="status-text" class="text-sm font-medium text-slate-500 italic">Inicializando módulos...</p>
+            </div>
+        </div>
+
+        <div id="summary-view" class="hidden animate-in fade-in zoom-in duration-500">
+            <h2 class="text-emerald-400 font-black text-3xl mb-4">SUCESSO!</h2>
+            <div id="stats-container" class="grid grid-cols-2 gap-3 text-left mb-8">
+                <!-- Stats will be injected here -->
+            </div>
+            <p class="text-slate-500 text-xs font-bold uppercase mb-4">Redirecionando em instantes...</p>
+            <button onclick="window.location.href='index.html'" class="bg-blue-600 hover:bg-blue-700 text-white font-black px-8 py-3 rounded-xl transition-all uppercase tracking-widest text-sm">Entrar no Sistema</button>
+        </div>
+    </div>
+
+    <script>
+        'use strict';
+        const API_URL = 'http://localhost:3001/api';
+        
+        async function run() {
+            const statusText = document.getElementById('status-text');
+            const updateStatus = (text) => statusText.textContent = text;
+
+            try {
+                updateStatus('Preparando dados de exemplo...');
+                
+                const vehicles = [
+                    { id: 'v1', placa: 'BRA-2E26', modelo: 'Scania R450', tipo: 'Caminhão', combustivel: 'Diesel S10', kmAtual: 145000, kmUltimaManutencao: 140000, kmProximaManutencao: 5000, ano: 2022, cor: 'Branco', ativo: 1 },
+                    { id: 'v2', placa: 'TMG-2026', modelo: 'VW Delivery 11.180', tipo: 'Caminhão', combustivel: 'Diesel S10', kmAtual: 68000, kmUltimaManutencao: 65000, kmProximaManutencao: 10000, ano: 2023, cor: 'Prata', ativo: 1 },
+                    { id: 'v3', placa: 'LOG-1F26', modelo: 'Iveco Daily', tipo: 'Van', combustivel: 'Diesel S10', kmAtual: 32000, kmUltimaManutencao: 20000, kmProximaManutencao: 10000, ano: 2021, cor: 'Azul', ativo: 1 }
+                ];
+
+                const drivers = [
+                    { id: 'd1', nome: 'Ricardo Almeida', cnh: '1234567890', categoria: 'E', telefone: '(11) 98888-7777', valorDiaria: 250, ativo: 1 },
+                    { id: 'd2', nome: 'Carlos Eduardo', cnh: '0987654321', categoria: 'D', telefone: '(11) 97777-6666', valorDiaria: 220, ativo: 1 },
+                    { id: 'd3', nome: 'Márcio Silva', cnh: '5554443332', categoria: 'AC', telefone: '(11) 96666-5555', valorDiaria: 200, ativo: 1 }
+                ];
+
+                const routes = [];
+                const destinations = ['Santos/SP', 'Curitiba/PR', 'Rio de Janeiro/RJ', 'Belo Horizonte/MG', 'Campinas/SP'];
+                for (let i = 1; i <= 28; i++) {
+                    const day = i < 10 ? '0' + i : i;
+                    const date = `2026-02-${day}`;
+                    const numRoutes = Math.floor(Math.random() * 2) + 1;
+                    for (let j = 0; j < numRoutes; j++) {
+                        const dIdx = Math.floor(Math.random() * drivers.length);
+                        const vIdx = Math.floor(Math.random() * vehicles.length);
+                        const destIdx = Math.floor(Math.random() * destinations.length);
+                        const km = Math.floor(Math.random() * 400) + 100;
+                        routes.push({
+                            id: 'r' + Date.now() + i + j,
+                            data: date,
+                            motoristaId: drivers[dIdx].id,
+                            veiculoId: vehicles[vIdx].id,
+                            origem: 'São Paulo/SP',
+                            destino: destinations[destIdx],
+                            km: km,
+                            valorFrete: km * 5.5,
+                            tipoCarga: 'Carga Geral',
+                            observacoes: 'Entrega padrão'
+                        });
+                    }
+                }
+
+                const fuel = [];
+                for (let i = 0; i < 10; i++) {
+                    const vIdx = Math.floor(Math.random() * vehicles.length);
+                    const litros = Math.floor(Math.random() * 100) + 50;
+                    const vL = 5.89;
+                    fuel.push({
+                        id: 'f' + i,
+                        data: `2026-02-${(i*2)+1 < 10 ? '0'+((i*2)+1) : (i*2)+1}`,
+                        veiculoId: vehicles[vIdx].id,
+                        tipoCombustivel: 'Diesel S10',
+                        litros: litros,
+                        valorLitro: vL,
+                        valorTotal: (litros * vL).toFixed(2),
+                        kmAbastecimento: vehicles[vIdx].kmAtual - (10 - i) * 500,
+                        posto: 'Posto Graal'
+                    });
+                }
+
+                const payables = [
+                    { id: 'p1', descricao: 'Aluguel Galpão', valor: 4500, vencimento: '2026-02-10', categoria: 'Aluguel', status: 'pago' },
+                    { id: 'p2', descricao: 'Seguro Frota', valor: 2800, vencimento: '2026-02-15', categoria: 'Seguro', status: 'pago' },
+                    { id: 'p3', descricao: 'Manutenção Scania', valor: 1200, vencimento: '2026-02-20', categoria: 'Manutenção', status: 'pendente' },
+                    { id: 'p4', descricao: 'Conta de Luz', valor: 450, vencimento: '2026-02-05', categoria: 'Outros', status: 'pago' },
+                    { id: 'p5', descricao: 'Internet Fibra', valor: 150, vencimento: '2026-02-12', categoria: 'Outros', status: 'pago' },
+                    { id: 'p6', descricao: 'IPVA Scania 1/3', valor: 1800, vencimento: '2026-02-15', categoria: 'IPVA', status: 'pendente' },
+                    { id: 'p7', descricao: 'Compra Pneus', valor: 3500, vencimento: '2026-02-28', categoria: 'Pneus', status: 'pendente' },
+                    { id: 'p8', descricao: 'Multa Excesso Velocidade', valor: 195, vencimento: '2026-02-25', categoria: 'Multas', status: 'pendente' }
+                ];
+
+                const receivables = [
+                    { id: 'r1', descricao: 'Frete Coca-Cola', valor: 8500, vencimento: '2026-02-10', cliente: 'Coca-Cola BR', status: 'recebido' },
+                    { id: 'r2', descricao: 'Frete Ambev', valor: 12000, vencimento: '2026-02-15', cliente: 'Ambev S.A.', status: 'recebido' },
+                    { id: 'r3', descricao: 'Frete Mercado Livre', valor: 6500, vencimento: '2026-02-20', cliente: 'ML Logística', status: 'pendente' },
+                    { id: 'r4', descricao: 'Serviço Extra Descarga', valor: 800, vencimento: '2026-02-12', cliente: 'Ambev S.A.', status: 'recebido' },
+                    { id: 'r5', descricao: 'Reembolso Pedágio', valor: 450, vencimento: '2026-02-25', cliente: 'Coca-Cola BR', status: 'pendente' },
+                    { id: 'r6', descricao: 'Frete Shopee', valor: 9200, vencimento: '2026-02-28', cliente: 'Shopee Log', status: 'pendente' }
+                ];
+
+                const driver_payments = [
+                    { id: 'dp1', motoristaId: 'd1', mes: 2, ano: 2026, diasTrabalhados: 22, valorDiaria: 250, adiantamentos: 500, valorFinal: (22*250)-500, pago: 1 },
+                    { id: 'dp2', motoristaId: 'd2', mes: 2, ano: 2026, diasTrabalhados: 18, valorDiaria: 220, adiantamentos: 300, valorFinal: (18*220)-300, pago: 1 },
+                    { id: 'dp3', motoristaId: 'd3', mes: 2, ano: 2026, diasTrabalhados: 20, valorDiaria: 200, adiantamentos: 400, valorFinal: (20*200)-400, pago: 0 }
+                ];
+
+                const invoices = [
+                    { id: 'i1', data: '2026-02-01', numero: '8872', descricao: 'Abastecimento Diesel', tipo: 'Saída', valor: 890, fornecedor: 'Posto Graal', foto: '' },
+                    { id: 'i2', data: '2026-02-10', numero: '112', descricao: 'Troca de Óleo Scania', tipo: 'Saída', valor: 1450, fornecedor: 'Mecânica Diesel', foto: '' },
+                    { id: 'i3', data: '2026-02-15', numero: '4452', descricao: 'Pneu Dianteiro', tipo: 'Saída', valor: 2100, fornecedor: 'Borracharia do Zé', foto: '' },
+                    { id: 'i4', data: '2026-02-20', numero: '99', descricao: 'Lavagem Completa Frota', tipo: 'Saída', valor: 600, fornecedor: 'EcoWash', foto: '' }
+                ];
+
+                updateStatus('Enviando para o banco de dados SQLite...');
+                
+                const seedData = {
+                    vehicles, drivers, routes, fuel, payables, receivables, driver_payments, invoices
+                };
+
+                const token = localStorage.getItem('tm_token') || '';
+                if (!token) throw new Error('Sem permissão (faça login como admin)');
+                const response = await fetch(`${API_URL}/seed`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify(seedData)
+                });
+
+                if (response.ok) {
+                    setTimeout(() => {
+                        document.getElementById('loading-view').classList.add('hidden');
+                        const summary = document.getElementById('summary-view');
+                        const stats = document.getElementById('stats-container');
+                        
+                        const dataStats = [
+                            { label: 'Veículos', count: vehicles.length },
+                            { label: 'Motoristas', count: drivers.length },
+                            { label: 'Rotas', count: routes.length },
+                            { label: 'Abastec.', count: fuel.length },
+                            { label: 'Contas Pagar', count: payables.length },
+                            { label: 'Contas Rec.', count: receivables.length },
+                            { label: 'Pagamentos', count: driver_payments.length },
+                            { label: 'Notas Fiscais', count: invoices.length }
+                        ];
+
+                        stats.innerHTML = dataStats.map(s => `
+                            <div class="bg-slate-900 border border-slate-800 p-3 rounded-lg">
+                                <p class="text-[9px] font-black text-slate-500 uppercase">${s.label}</p>
+                                <p class="text-lg font-bold text-white">${s.count}</p>
+                            </div>
+                        `).join('');
+
+                        summary.classList.remove('hidden');
+                        setTimeout(() => window.location.href = 'index.html', 3000);
+                    }, 1000);
+                } else {
+                    throw new Error('Falha ao semear banco de dados');
+                }
+
+            } catch (e) {
+                console.error(e);
+                alert('ERRO ao gerar dados: ' + e.message);
+                window.location.href = 'index.html';
+            }
+        }
+
+        window.onload = run;
+    </script>
+</body>
+</html>
